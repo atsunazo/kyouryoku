@@ -32,7 +32,10 @@
     // リアルタイム監視
     const csvRef = ref(db, 'csvData');
     onValue(csvRef, (snapshot) => {
-      const data = snapshot.val() || {};
+      // b.htmlのonValue内
+      const dataObj = snapshot.val() || {};
+      const data = Object.entries(dataObj).map(([key, row]) => ({...row, key})).sort((a,b) => a.id - b.id);
+
       document.getElementById('status').innerHTML = `行数: ${Object.keys(data).length}`;
     });
     
