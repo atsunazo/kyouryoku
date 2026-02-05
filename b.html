@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="display"></div>
+  <script>
+    function loadCSV() {
+      return localStorage.getItem('sharedCSV') || '空';
+    }
+    function displayCSV() {
+      let csv = loadCSV();
+      let html = '<table border="1"><tr><th>ID</th><th>Name</th><th>Status</th></tr>';
+      csv.split('\n').slice(1).forEach(line => {
+        let cols = line.split(',');
+        html += `<tr><td>${cols[0]}</td><td>${cols[1]}</td><td>${cols[2]}</td></tr>`;
+      });
+      html += '</table>';
+      document.getElementById('display').innerHTML = html;
+    }
+    displayCSV();
+    setInterval(displayCSV, 1000);  // 1秒更新で同期
+  </script>
+</body>
+</html>
