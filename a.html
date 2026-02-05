@@ -1,24 +1,33 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <meta charset="UTF-8">
+  <title>A側 - CSV更新</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
 <body>
-  <button onclick="updateData()">クリックで更新</button>
-  <div id="status"></div>
+  <h1>A側: クリックでItem1のstatusをtrueに</h1>
+  <button onclick="updateData()">更新クリック</button>
+  <div id="status">読み込み中...</div>
   <script>
     function loadCSV() {
-      return localStorage.getItem('sharedCSV') || 'id,name,status\n1,Item1,false\n2,Item2,false';
+      let csvStr = localStorage.getItem('sharedCSV') || 'id,name,status\n1,Item1,false\n2,Item2,false\n3,Item3,false';
+      return Papa.parse(csvStr, {header: true}).data;
     }
-    function saveCSV(csv) {
-      localStorage.setItem('sharedCSV', csv);
-      document.getElementById('status').innerHTML = '更新完了';
+    function saveCSV(data) {
+      let csvStr = Papa.unparse(data);
+      localStorage.setItem('sharedCSV', csvStr);
     }
     function updateData() {
-      let csv = loadCSV();
-      let lines = csv.split('\n');
-      lines[1] = lines[1].replace(/false$/, 'true');  // Item1のstatusをtrueに
-      saveCSV(lines.join('\n'));
+      let data = loadCSV();
+      data[0].status = 'true';  // Item1更新
+      saveCSV(data);
+      document.getElementById('status').innerHTML = '更新完了: ' + JSON.stringify(data[0]);
     }
     // ページロード時表示
-    document.getElementById('status').innerHTML = 'CSV: ' + loadCSV();
+    window.onload = () => {
+      document.getElementById('status').innerHTML = '現在: ' + JSON.stringify(loadCSV());
+    };
   </script>
 </body>
 </html>
