@@ -1,9 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>A側 - CSV更新</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
+  import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js';
+  
+  // ステップ3のfirebaseConfigをここ貼り付け
+  const firebaseConfig = { 'https://csv-sync-app-35682-default-rtdb.asia-southeast1.firebasedatabase.app/' };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  
+  // CSVデータ用参照（グローバル）
+  window.csvRef = ref(db, 'csvData');
+</script>
 </head>
 <body>
   <h1>A側: クリックでItem1のstatusをtrueに</h1>
