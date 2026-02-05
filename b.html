@@ -9,10 +9,19 @@
   <h1>B側: A側の変更をリアルタイム表示</h1>
   <div id="display">読み込み中...</div>
   <script>
-    function loadCSV() {
-      let csvStr = localStorage.getItem('sharedCSV') || '空';
-      return Papa.parse(csvStr, {header: true}).data;
-    }
+    async function loadCSV() {
+  try {
+    let response = await fetch('data.csv');
+    let csvStr = await response.text();
+    localStorage.setItem('sharedCSV', csvStr);  // 初回同期
+    return Papa.parse(csvStr, {header: true}).data;
+  } catch(e) {
+    // ファイルなし時はlocalStorage使用
+    let csvStr = localStorage.getItem('sharedCSV') || 'id,name,status\n1,Item1,false';
+    return Papa.parse(csvStr, {header: true}).data;
+  }
+}
+
     function displayCSV() {
       let data = loadCSV();
       if (data.length === 0 || data[0].id === undefined) {
