@@ -2,50 +2,42 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>B側 - Firebase CSVリアルタイム表示</title>
-  <style>table {border-collapse: collapse;} th,td {border:1px solid #ccc; padding:8px;}</style>
+  <title>B側 - 表示専用</title>
 </head>
 <body>
-  <h1>📱 B側: A側の変更即反映</h1>
-  <div id="display">接続中...</div>
+  <h1>📱 B側: Aの入力即表示</h1>
+  <div id="display">
+    <h2>Item1: 読み込み中...</h2>
+  </div>
+  <div id="status">接続中...</div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
     import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js';
     
     const firebaseConfig = {
-    apiKey: "AIzaSyDyr-r4YdBjark6GpoUgPBtW8NLMj6hUjE",
-    authDomain: "csv-sync-app-35682.firebaseapp.com",
-    databaseURL: "https://csv-sync-app-35682-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "csv-sync-app-35682",
-    storageBucket: "csv-sync-app-35682.firebasestorage.app",
-    messagingSenderId: "748623311917",
-    appId: "1:748623311917:web:0a1118a75dd237ff5d34a4"
-  }; 
+      apiKey: "AIzaSyDyr-r4YdBjark6GpoUgPBtW8NLMj6hUjE",
+      authDomain: "csv-sync-app-35682.firebaseapp.com",
+      databaseURL: "https://csv-sync-app-35682-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "csv-sync-app-35682",
+      storageBucket: "csv-sync-app-35682.firebasestorage.app",
+      messagingSenderId: "748623311917",
+      appId: "1:748623311917:web:0a1118a75dd237ff5d34a4"
+    }; 
     
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const csvRef = ref(db, 'csvData');
     
-    onValue(csvRef, (snapshot) => {
-      const dataObj = snapshot.val() || {};
-      const data = Object.values(dataObj).sort((a,b) => a.id - b.id);
-      
-      if (data.length === 0) {
-        document.getElementById('display').innerHTML = 'A側で初回アクセス中...';
-        return;
-      }
-      
-      let html = '<table><tr><th>ID</th><th>Name</th><th>Status</th></tr>';
-      data.forEach(row => {
-        html += `<tr>
-          <td>${row.id}</td>
-          <td>${row.name}</td>
-          <td style="color:${row.status ? 'green' : 'red'}">${row.status ? '✅完了' : '❌未'}</td>
-        </tr>`;
-      });
-      html += '</table>';
-      document.getElementById('display').innerHTML = html;
+    // Item1監視のみ（表示専用）
+    const item1Ref = ref(db, 'csvData/1');
+    onValue(item1Ref, (snapshot) => {
+      const data = snapshot.val() || {};
+      document.getElementById('display').innerHTML = `
+        <h2>Item1: ${data.name || '未設定'}</h2>
+        <p>ステータス: ${data.status ? '✅ ON' : '❌ OFF'}</p>
+        <p>ID: ${data.id || 1}</p>
+      `;
+      document.getElementById('status').innerHTML = '最新データ受信完了';
     });
   </script>
 </body>
