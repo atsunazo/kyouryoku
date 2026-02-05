@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
+  <title>A側 - Firebase CSV更新</title>
+</head>
+<body>
+  <h1>🚀 A側: クリックで全世界即同期</h1>
+  <button onclick="updateData()">Item1をtrueに更新</button>
+  <button onclick="addRow()">新行追加</button>
+  <div id="status">接続中...</div>
+
   <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
-  import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js';
-  
-  // ステップ3のfirebaseConfigをここ貼り付け
- const firebaseConfig = {
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
+    import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js';
+    
+    const firebaseConfig = {
     apiKey: "AIzaSyDyr-r4YdBjark6GpoUgPBtW8NLMj6hUjE",
     authDomain: "csv-sync-app-35682.firebaseapp.com",
     databaseURL: "https://csv-sync-app-35682-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -14,52 +22,41 @@
     storageBucket: "csv-sync-app-35682.firebasestorage.app",
     messagingSenderId: "748623311917",
     appId: "1:748623311917:web:0a1118a75dd237ff5d34a4"
-  };  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  
-  // CSVデータ用参照（グローバル）
-  window.csvRef = ref(db, 'csvData');
-</script>
-</head>
-<body>
-  <h1>A側: クリックでItem1のstatusをtrueに</h1>
-  <button onclick="updateData()">更新クリック</button>
-  <div id="status">読み込み中...</div>
-  <script>
-    async function loadCSV() {
-  try {
-    let response = await fetch('data.csv');
-    let csvStr = await response.text();
-    localStorage.setItem('sharedCSV', csvStr);  // 初回同期
-    return Papa.parse(csvStr, {header: true}).data;
-  } catch(e) {
-    // ファイルなし時はlocalStorage使用
-    let csvStr = localStorage.getItem('sharedCSV') || 'id,name,status\n1,Item1,false';
-    return Papa.parse(csvStr, {header: true}).data;
-  }
-}
-function updateData() {
-  const data = [
-    {id:1, name:'Item1', status: true},
-    {id:2, name:'Item2', status: false}
-  ];
-  set(window.csvRef, data);  // 全員即反映
-}
-
-    function saveCSV(data) {
-      let csvStr = Papa.unparse(data);
-      localStorage.setItem('sharedCSV', csvStr);
-    }
-    function updateData() {
-      let data = loadCSV();
-      data[0].status = 'true';  // Item1更新
-      saveCSV(data);
-      document.getElementById('status').innerHTML = '更新完了: ' + JSON.stringify(data[0]);
-    }
-    // ページロード時表示
-    window.onload = () => {
-      document.getElementById('status').innerHTML = '現在: ' + JSON.stringify(loadCSV());
+  }; 
+    
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const csvRef = ref(db, 'csvData');
+    
+    // リアルタイム監視（A側も自分更新見える）
+    onValue(csvRef, (snapshot) => {
+      const data = snapshot.val() || [];
+      document.getElementById('status').innerHTML = 
+        `現在データ: ${data.length}行<br>` +
+        JSON.stringify(data.slice(0,3), null, 2);  // 先頭3行表示
+    });
+    
+    window.updateData = function() {
+      csvRef.child('0').update({status: true}).then(() => {
+        document.getElementById('status').innerHTML += '<br>✅ 更新成功';
+      });
     };
+    
+    window.addRow = function() {
+      const newId = Date.now();
+      set(csvRef.child(newId.toString()), {
+        id: newId,
+        name: `NewItem-${newId}`,
+        status: false
+      });
+    };
+    
+    // 初期データ（初回のみ）
+    set(csvRef, {
+      '0': {id:1, name:'Item1', status: false},
+      '1': {id:2, name:'Item2', status: false},
+      '2': {id:3, name:'Item3', status: false}
+    });
   </script>
 </body>
 </html>
