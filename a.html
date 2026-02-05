@@ -31,6 +31,13 @@
     return Papa.parse(csvStr, {header: true}).data;
   }
 }
+function updateData() {
+  const data = [
+    {id:1, name:'Item1', status: true},
+    {id:2, name:'Item2', status: false}
+  ];
+  set(window.csvRef, data);  // 全員即反映
+}
 
     function saveCSV(data) {
       let csvStr = Papa.unparse(data);
