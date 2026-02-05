@@ -1,12 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
-  import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js';
-  
-  // ステップ3のfirebaseConfigをここ貼り付け
-   const firebaseConfig = {
+  <meta charset="UTF-8">
+  <title>B側 - Firebase CSVリアルタイム表示</title>
+  <style>table {border-collapse: collapse;} th,td {border:1px solid #ccc; padding:8px;}</style>
+</head>
+<body>
+  <h1>📱 B側: A側の変更即反映</h1>
+  <div id="display">接続中...</div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
+    import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js';
+    
+    const firebaseConfig = {
     apiKey: "AIzaSyDyr-r4YdBjark6GpoUgPBtW8NLMj6hUjE",
     authDomain: "csv-sync-app-35682.firebaseapp.com",
     databaseURL: "https://csv-sync-app-35682-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -14,56 +21,32 @@
     storageBucket: "csv-sync-app-35682.firebasestorage.app",
     messagingSenderId: "748623311917",
     appId: "1:748623311917:web:0a1118a75dd237ff5d34a4"
-  };
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  
-  // CSVデータ用参照（グローバル）
-  window.csvRef = ref(db, 'csvData');
-</script>
-
-</head>
-<body>
-  <h1>B側: A側の変更をリアルタイム表示</h1>
-  <div id="display">読み込み中...</div>
-  <div id="debug"></div>  <!-- デバッグ用追加 -->
-  <script>
-    function loadCSV() {
-      let csvStr = localStorage.getItem('sharedCSV');
-      document.getElementById('debug').innerHTML = 'localStorage: ' + (csvStr ? csvStr.substring(0,100)+'...' : 'null');
-      if (!csvStr) return [];
-      try {
-        return Papa.parse(csvStr, {header: true, skipEmptyLines: true}).data;
-      } catch(e) {
-        document.getElementById('debug').innerHTML += '<br>Parseエラー: ' + e.message;
-        return [];
-      }
-    }
-    function displayCSV() {
-      let data = loadCSV();
-      let debugEl = document.getElementById('debug');
-      if (!data || data.length === 0 || !data[0]) {
-        document.getElementById('display').innerHTML = 'データなし（A側で最初にクリック？）';
+  }; 
+    
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const csvRef = ref(db, 'csvData');
+    
+    onValue(csvRef, (snapshot) => {
+      const dataObj = snapshot.val() || {};
+      const data = Object.values(dataObj).sort((a,b) => a.id - b.id);
+      
+      if (data.length === 0) {
+        document.getElementById('display').innerHTML = 'A側で初回アクセス中...';
         return;
       }
-      let html = '<table border="1"><tr><th>ID</th><th>Name</th><th>Status</th></tr>';
+      
+      let html = '<table><tr><th>ID</th><th>Name</th><th>Status</th></tr>';
       data.forEach(row => {
-        html += `<tr><td>${row.id || ''}</td><td>${row.name || ''}</td><td style="color:${row.status === 'true' ? 'green' : 'red'}">${row.status || ''}</td></tr>`;
+        html += `<tr>
+          <td>${row.id}</td>
+          <td>${row.name}</td>
+          <td style="color:${row.status ? 'green' : 'red'}">${row.status ? '✅完了' : '❌未'}</td>
+        </tr>`;
       });
-      html += '</table> 行数: ' + data.length;
+      html += '</table>';
       document.getElementById('display').innerHTML = html;
-      debugEl.innerHTML += ' → 表示成功';
-    }
-    window.onload = () => {
-      displayCSV();
-      setInterval(displayCSV, 1000);
-    };
-    onValue(window.csvRef, (snapshot) => {
-  const data = snapshot.val() || [];
-  // displayCSV(data) 呼び出し（前コード流用）
-  displayCSV(data);  // Papa.parse不要、JSON配列直使用
-});
-
+    });
   </script>
 </body>
 </html>
