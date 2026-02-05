@@ -8,34 +8,34 @@
 <body>
   <h1>B側: A側の変更をリアルタイム表示</h1>
   <div id="display">読み込み中...</div>
+  <div id="debug"></div>  <!-- デバッグ用追加 -->
   <script>
-    async function loadCSV() {
-  try {
-    let response = await fetch('data.csv');
-    let csvStr = await response.text();
-    localStorage.setItem('sharedCSV', csvStr);  // 初回同期
-    return Papa.parse(csvStr, {header: true}).data;
-  } catch(e) {
-    // ファイルなし時はlocalStorage使用
-    let csvStr = localStorage.getItem('sharedCSV') || 'id,name,status\n1,Item1,false';
-    return Papa.parse(csvStr, {header: true}).data;
-  }
-}
-
+    function loadCSV() {
+      let csvStr = localStorage.getItem('sharedCSV');
+      document.getElementById('debug').innerHTML = 'localStorage: ' + (csvStr ? csvStr.substring(0,100)+'...' : 'null');
+      if (!csvStr) return [];
+      try {
+        return Papa.parse(csvStr, {header: true, skipEmptyLines: true}).data;
+      } catch(e) {
+        document.getElementById('debug').innerHTML += '<br>Parseエラー: ' + e.message;
+        return [];
+      }
+    }
     function displayCSV() {
       let data = loadCSV();
-      if (data.length === 0 || data[0].id === undefined) {
-        document.getElementById('display').innerHTML = 'データなし';
+      let debugEl = document.getElementById('debug');
+      if (!data || data.length === 0 || !data[0]) {
+        document.getElementById('display').innerHTML = 'データなし（A側で最初にクリック？）';
         return;
       }
       let html = '<table border="1"><tr><th>ID</th><th>Name</th><th>Status</th></tr>';
       data.forEach(row => {
-        html += `<tr><td>${row.id}</td><td>${row.name}</td><td style="color:${row.status === 'true' ? 'green' : 'red'}">${row.status}</td></tr>`;
+        html += `<tr><td>${row.id || ''}</td><td>${row.name || ''}</td><td style="color:${row.status === 'true' ? 'green' : 'red'}">${row.status || ''}</td></tr>`;
       });
-      html += '</table>';
+      html += '</table> 行数: ' + data.length;
       document.getElementById('display').innerHTML = html;
+      debugEl.innerHTML += ' → 表示成功';
     }
-    // ロード時 + 1秒ポーリング
     window.onload = () => {
       displayCSV();
       setInterval(displayCSV, 1000);
