@@ -6,8 +6,15 @@
   import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js';
   
   // ステップ3のfirebaseConfigをここ貼り付け
-  const firebaseConfig = { 'https://csv-sync-app-35682-default-rtdb.asia-southeast1.firebasedatabase.app/' };
-  const app = initializeApp(firebaseConfig);
+ const firebaseConfig = {
+    apiKey: "AIzaSyDyr-r4YdBjark6GpoUgPBtW8NLMj6hUjE",
+    authDomain: "csv-sync-app-35682.firebaseapp.com",
+    databaseURL: "https://csv-sync-app-35682-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "csv-sync-app-35682",
+    storageBucket: "csv-sync-app-35682.firebasestorage.app",
+    messagingSenderId: "748623311917",
+    appId: "1:748623311917:web:0a1118a75dd237ff5d34a4"
+  };  const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   
   // CSVデータ用参照（グローバル）
