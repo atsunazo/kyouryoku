@@ -1,23 +1,36 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <meta charset="UTF-8">
+  <title>B側 - CSV表示</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
 <body>
-  <div id="display"></div>
+  <h1>B側: A側の変更をリアルタイム表示</h1>
+  <div id="display">読み込み中...</div>
   <script>
     function loadCSV() {
-      return localStorage.getItem('sharedCSV') || '空';
+      let csvStr = localStorage.getItem('sharedCSV') || '空';
+      return Papa.parse(csvStr, {header: true}).data;
     }
     function displayCSV() {
-      let csv = loadCSV();
+      let data = loadCSV();
+      if (data.length === 0 || data[0].id === undefined) {
+        document.getElementById('display').innerHTML = 'データなし';
+        return;
+      }
       let html = '<table border="1"><tr><th>ID</th><th>Name</th><th>Status</th></tr>';
-      csv.split('\n').slice(1).forEach(line => {
-        let cols = line.split(',');
-        html += `<tr><td>${cols[0]}</td><td>${cols[1]}</td><td>${cols[2]}</td></tr>`;
+      data.forEach(row => {
+        html += `<tr><td>${row.id}</td><td>${row.name}</td><td style="color:${row.status === 'true' ? 'green' : 'red'}">${row.status}</td></tr>`;
       });
       html += '</table>';
       document.getElementById('display').innerHTML = html;
     }
-    displayCSV();
-    setInterval(displayCSV, 1000);  // 1秒更新で同期
+    // ロード時 + 1秒ポーリング
+    window.onload = () => {
+      displayCSV();
+      setInterval(displayCSV, 1000);
+    };
   </script>
 </body>
 </html>
