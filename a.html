@@ -2,19 +2,19 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>A側 - Firebase CSV更新</title>
+  <title>A側 - Firebase v10修正版</title>
 </head>
 <body>
-  <h1>🚀 A側: クリックで全世界即同期</h1>
-  <button onclick="updateData()">Item1をtrueに更新</button>
+  <h1>🚀 A側: クリック即全世界同期</h1>
+  <button onclick="updateData()">Item1 true更新</button>
   <button onclick="addRow()">新行追加</button>
   <div id="status">接続中...</div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
-    import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js';
+    import { getDatabase, ref, onValue, update, set } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js';
     
-    const firebaseConfig = {
+      const firebaseConfig = {
     apiKey: "AIzaSyDyr-r4YdBjark6GpoUgPBtW8NLMj6hUjE",
     authDomain: "csv-sync-app-35682.firebaseapp.com",
     databaseURL: "https://csv-sync-app-35682-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -24,39 +24,48 @@
     appId: "1:748623311917:web:0a1118a75dd237ff5d34a4"
   }; 
     
+  
+    
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const csvRef = ref(db, 'csvData');
     
-    // リアルタイム監視（A側も自分更新見える）
+    // リアルタイム監視
+    const csvRef = ref(db, 'csvData');
     onValue(csvRef, (snapshot) => {
-      const data = snapshot.val() || [];
-      document.getElementById('status').innerHTML = 
-        `現在データ: ${data.length}行<br>` +
-        JSON.stringify(data.slice(0,3), null, 2);  // 先頭3行表示
+      const data = snapshot.val() || {};
+      document.getElementById('status').innerHTML = `行数: ${Object.keys(data).length}`;
     });
     
-    window.updateData = function() {
-      csvRef.child('0').update({status: true}).then(() => {
-        document.getElementById('status').innerHTML += '<br>✅ 更新成功';
+    // v10正しい更新方法
+    window.updateData = () => {
+      // Item1（id=1）を特定更新
+      const item1Ref = ref(db, 'csvData/1');
+      update(item1Ref, { status: true }).then(() => {
+        document.getElementById('status').innerHTML += ' ✅ 更新成功';
+      }).catch(e => {
+        document.getElementById('status').innerHTML = '❌ ' + e.message;
       });
     };
     
-    window.addRow = function() {
-      const newId = Date.now();
-      set(csvRef.child(newId.toString()), {
+    window.addRow = () => {
+      const newId = Date.now().toString();
+      const newRowRef = ref(db, `csvData/${newId}`);
+      set(newRowRef, {
         id: newId,
-        name: `NewItem-${newId}`,
+        name: `NewItem-${newId.slice(-4)}`,
         status: false
       });
     };
     
-    // 初期データ（初回のみ）
-    set(csvRef, {
-      '0': {id:1, name:'Item1', status: false},
-      '1': {id:2, name:'Item2', status: false},
-      '2': {id:3, name:'Item3', status: false}
+    // 初回データ（自動）
+    const initRef = ref(db, 'csvData');
+    set(initRef, {
+      '1': {id:1, name:'Item1', status: false},
+      '2': {id:2, name:'Item2', status: false},
+      '3': {id:3, name:'Item3', status: false}
     });
   </script>
 </body>
 </html>
+
+  
