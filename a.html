@@ -2,73 +2,67 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>A側 - Firebase v10修正版</title>
+  <title>A側 - 入力フォーム版</title>
 </head>
 <body>
-  <h1>🚀 A側: クリック即全世界同期</h1>
-  <button onclick="updateData()">Item1 true更新</button>
-  <button onclick="addRow()">新行追加</button>
+  <h1>🚀 A側: 入力即全世界同期</h1>
+  
+  <!-- 入力フォーム（Item1用） -->
+  <div>
+    <label>Item1 名前: </label>
+    <input type="text" id="nameInput1" placeholder="名前を入力">
+  </div>
+  <div>
+    <label>Item1 ステータス: </label>
+    <input type="checkbox" id="statusInput1"> ON/OFF
+  </div>
   <div id="status">接続中...</div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
-    import { getDatabase, ref, onValue, update, set } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js';
+    import { getDatabase, ref, onValue, update } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js';
     
-      const firebaseConfig = {
-    apiKey: "AIzaSyDyr-r4YdBjark6GpoUgPBtW8NLMj6hUjE",
-    authDomain: "csv-sync-app-35682.firebaseapp.com",
-    databaseURL: "https://csv-sync-app-35682-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "csv-sync-app-35682",
-    storageBucket: "csv-sync-app-35682.firebasestorage.app",
-    messagingSenderId: "748623311917",
-    appId: "1:748623311917:web:0a1118a75dd237ff5d34a4"
-  }; 
-    
-  
+    const firebaseConfig = {
+      apiKey: "AIzaSyDyr-r4YdBjark6GpoUgPBtW8NLMj6hUjE",
+      authDomain: "csv-sync-app-35682.firebaseapp.com",
+      databaseURL: "https://csv-sync-app-35682-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "csv-sync-app-35682",
+      storageBucket: "csv-sync-app-35682.firebasestorage.app",
+      messagingSenderId: "748623311917",
+      appId: "1:748623311917:web:0a1118a75dd237ff5d34a4"
+    }; 
     
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     
-    // リアルタイム監視
-    const csvRef = ref(db, 'csvData');
-    onValue(csvRef, (snapshot) => {
-      // b.htmlのonValue内
-      const dataObj = snapshot.val() || {};
-      const data = Object.entries(dataObj).map(([key, row]) => ({...row, key})).sort((a,b) => a.id - b.id);
-
-      document.getElementById('status').innerHTML = `行数: ${Object.keys(data).length}`;
+    // Item1の参照（csvData/1）
+    const item1Ref = ref(db, 'csvData/1');
+    
+    // リアルタイム監視 + 双方向同期
+    onValue(item1Ref, (snapshot) => {
+      const data = snapshot.val() || {};
+      // 入力欄にFirebaseデータを反映（他ページからの変更も同期）
+      document.getElementById('nameInput1').value = data.name || '';
+      document.getElementById('statusInput1').checked = data.status || false;
+      document.getElementById('status').innerHTML = `同期中: ${data.name || '未設定'} (${data.status ? 'ON' : 'OFF'})`;
     });
     
-    // v10正しい更新方法
-    window.updateData = () => {
-      // Item1（id=1）を特定更新
-      const item1Ref = ref(db, 'csvData/1');
-      update(item1Ref, { status: true }).then(() => {
-        document.getElementById('status').innerHTML += ' ✅ 更新成功';
-      }).catch(e => {
-        document.getElementById('status').innerHTML = '❌ ' + e.message;
-      });
-    };
+    // 名前入力のリアルタイム更新（入力するたび即Firebase更新）
+    document.getElementById('nameInput1').addEventListener('input', (e) => {
+      update(item1Ref, { name: e.target.value });
+    });
     
-    window.addRow = () => {
-      const newId = Date.now().toString();
-      const newRowRef = ref(db, `csvData/${newId}`);
-      set(newRowRef, {
-        id: newId,
-        name: `NewItem-${newId.slice(-4)}`,
-        status: false
-      });
-    };
+    // ステータスチェックボックスのリアルタイム更新
+    document.getElementById('statusInput1').addEventListener('change', (e) => {
+      update(item1Ref, { status: e.target.checked });
+    });
     
-    // 初回データ（自動）
-    const initRef = ref(db, 'csvData');
-    set(initRef, {
-      '1': {id:1, name:'Item1', status: false},
-      '2': {id:2, name:'Item2', status: false},
-      '3': {id:3, name:'Item3', status: false}
+    // 初回データ作成（名前とステータス対応）
+    update(item1Ref, {
+      id: 1,
+      name: 'Item1',
+      status: false
     });
   </script>
 </body>
 </html>
-
-  
