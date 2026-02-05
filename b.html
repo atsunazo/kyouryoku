@@ -50,6 +50,12 @@
       displayCSV();
       setInterval(displayCSV, 1000);
     };
+    onValue(window.csvRef, (snapshot) => {
+  const data = snapshot.val() || [];
+  // displayCSV(data) 呼び出し（前コード流用）
+  displayCSV(data);  // Papa.parse不要、JSON配列直使用
+});
+
   </script>
 </body>
 </html>
